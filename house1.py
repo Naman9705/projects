@@ -77,10 +77,12 @@ input_df = pd.DataFrame([input_data])
 # Align the columns of input_df with the training data (X)
 input_df = input_df[X.columns]
 
-# Predict the house price using the trained model
-predicted_price_log = model.predict(input_df)[0]
-predicted_price = np.expm1(predicted_price_log)  # Convert log-transformed value back to original scale
+# Create a "Predict" button
+if st.sidebar.button("Predict"):
+    # Predict the house price using the trained model
+    predicted_price_log = model.predict(input_df)[0]
+    predicted_price = np.expm1(predicted_price_log)  # Convert log-transformed value back to original scale
 
-# Display the results in the main window
-st.write(f"### Predicted House Price: ₹{predicted_price:,.2f}")
-st.write(f"### Mean Squared Error (MSE): {mse:.2f}")
+    # Display the results in the main window
+    st.write(f"### Predicted House Price: ₹{predicted_price:,.2f}")
+    st.write(f"### Mean Squared Error (MSE): {mse:.2f}")
