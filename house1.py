@@ -4,8 +4,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 
-# Load the dataset
-data = pd.read_csv(r"C:\Users\Nakul Bohra\Downloads\Housing.csv")
+# Streamlit app title
+st.title("House Price Prediction App")
+
+# Load the constant CSV file
+data = pd.read_csv('Housing.csv')  # Assuming the file is in the same directory as your script
 
 # Preprocess categorical data (convert yes/no to 1/0, etc.)
 data['mainroad'] = data['mainroad'].map({'yes': 1, 'no': 0})
@@ -30,9 +33,6 @@ model.fit(X_train, y_train)
 # Evaluate the model
 y_pred = model.predict(X_test)
 mse = mean_squared_error(y_test, y_pred)
-
-# Streamlit app
-st.title("House Price Prediction App")
 
 # Sidebar for user inputs
 st.sidebar.header("Input Features")
