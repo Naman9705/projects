@@ -36,10 +36,10 @@ mse = mean_squared_error(y_test, y_pred)
 
 # Sidebar for user inputs
 st.sidebar.header("Input Features")
-area = st.sidebar.number_input("Area (sqft)", value=5000)
+area = st.sidebar.number_input("Area (sqft)", value=1000)
 bedrooms = st.sidebar.slider("Bedrooms", 1, 10, 3)
-bathrooms = st.sidebar.slider("Bathrooms", 1, 5, 2)
-stories = st.sidebar.slider("Stories", 1, 4, 2)
+bathrooms = st.sidebar.slider("Bathrooms", 1, 10, 2)
+stories = st.sidebar.slider("Stories", 1, 5, 2)
 
 # Display Yes/No and map to 1/0 for model input
 mainroad = st.sidebar.selectbox("Main Road", ["Yes", "No"])
@@ -48,7 +48,7 @@ basement = st.sidebar.selectbox("Basement", ["Yes", "No"])
 hotwaterheating = st.sidebar.selectbox("Hot Water Heating", ["Yes", "No"])
 airconditioning = st.sidebar.selectbox("Air Conditioning", ["Yes", "No"])
 prefarea = st.sidebar.selectbox("Preferred Area", ["Yes", "No"])
-parking = st.sidebar.slider("Parking", 0, 5, 2)
+parking = st.sidebar.slider("Parking", 0, 10, 2)
 furnishingstatus = st.sidebar.selectbox("Furnishing Status", ["Unfurnished", "Semi-Furnished", "Furnished"])
 
 # Map Yes/No to 1/0
