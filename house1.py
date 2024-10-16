@@ -11,7 +11,7 @@ import seaborn as sns
 # Function to load and preprocess the data
 def load_data():
     # Load dataset from the CSV file
-    data = pd.read_csv("house_data.csv")
+    data = pd.read_csv("Housing.csv")
     
     # Handle missing values by dropping rows with NaN values
     data = data.dropna()
