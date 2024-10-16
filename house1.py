@@ -1,16 +1,20 @@
 import streamlit as st
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
-
+from sklearn.metrics import mean_squared_error
 
 # Streamlit app title
 st.title("House Price Prediction App")
 
 # Load the constant CSV file
 data = pd.read_csv('Housing.csv')  # Ensure the file is in the same directory
+
+# Check for missing values
+if data.isnull().sum().any():
+    st.warning("Data contains missing values, which can affect model performance.")
+    data.fillna(data.median(), inplace=True)
 
 # Preprocess categorical data (convert yes/no to 1/0)
 data['mainroad'] = data['mainroad'].map({'yes': 1, 'no': 0})
@@ -25,20 +29,16 @@ data['furnishingstatus'] = data['furnishingstatus'].map({'unfurnished': 0, 'semi
 X = data.drop('price', axis=1)
 y = data['price']
 
+# Separate numeric columns for scaling
+numeric_features = ['area', 'bedrooms', 'bathrooms', 'stories', 'parking']
+scaler = StandardScaler()
+X[numeric_features] = scaler.fit_transform(X[numeric_features])
+
 # Split data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-
-# Separate numeric columns for scaling
-numeric_features = ['area', 'bedrooms', 'bathrooms', 'stories', 'parking']
-
-# Apply standard scaling
-scaler = StandardScaler()
-data[numeric_features] = scaler.fit_transform(data[numeric_features])
-
-
-# Train a linear regression model
-model = LinearRegression()
+# Train a Random Forest model
+model = RandomForestRegressor(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
 # Evaluate the model
@@ -47,10 +47,10 @@ mse = mean_squared_error(y_test, y_pred)
 
 # Sidebar for user inputs
 st.sidebar.header("Input Features")
-area = st.sidebar.number_input("Area (sqft)", value=1000)
+area = st.sidebar.number_input("Area (sqft)", value=5000)
 bedrooms = st.sidebar.slider("Bedrooms", 1, 10, 3)
-bathrooms = st.sidebar.slider("Bathrooms", 1, 10, 2)
-stories = st.sidebar.slider("Stories", 1, 5, 2)
+bathrooms = st.sidebar.slider("Bathrooms", 1, 5, 2)
+stories = st.sidebar.slider("Stories", 1, 4, 2)
 
 # Display Yes/No and map to 1/0 for model input
 mainroad = st.sidebar.selectbox("Main Road", ["Yes", "No"])
@@ -59,7 +59,7 @@ basement = st.sidebar.selectbox("Basement", ["Yes", "No"])
 hotwaterheating = st.sidebar.selectbox("Hot Water Heating", ["Yes", "No"])
 airconditioning = st.sidebar.selectbox("Air Conditioning", ["Yes", "No"])
 prefarea = st.sidebar.selectbox("Preferred Area", ["Yes", "No"])
-parking = st.sidebar.slider("Parking", 0, 10, 2)
+parking = st.sidebar.slider("Parking", 0, 5, 2)
 furnishingstatus = st.sidebar.selectbox("Furnishing Status", ["Unfurnished", "Semi-Furnished", "Furnished"])
 
 # Map Yes/No to 1/0
@@ -80,6 +80,9 @@ if st.sidebar.button("Predict Price"):
     input_data = pd.DataFrame([[area, bedrooms, bathrooms, stories, mainroad, guestroom, basement,
                                 hotwaterheating, airconditioning, parking, prefarea, furnishingstatus]],
                               columns=X.columns)
+    
+    # Scale the input data
+    input_data[numeric_features] = scaler.transform(input_data[numeric_features])
     
     # Make prediction
     predicted_price = model.predict(input_data)[0]
