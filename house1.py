@@ -1,88 +1,123 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 
-# Load the dataset (constant file path)
+# Load the data from CSV file (assuming it's in the same repo)
 @st.cache
 def load_data():
-    data = pd.read_csv('Housing.csv')
+    # Make sure to put the correct path to the CSV file in the repo
+    data = pd.read_csv("Housing.csv")
     return data
 
-# Load the dataset
-data = load_data()
+# Apply Log Transformation to the target variable (Price)
+def log_transform_target(df, target_column='price'):
+    df[target_column] = np.log(df[target_column])
+    return df
 
-# Prepare the data
-binary_columns = ['guestroom', 'mainroad', 'basement', 'hotwaterheating', 'airconditioning', 'prefarea', 'furnishingstatus']
+# Train the Random Forest Regressor Model
+def train_model(X_train, y_train):
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X_train, y_train)
+    return model
 
-# Convert binary columns to Yes/No
-for col in binary_columns:
-    data[col] = data[col].map({0: 'No', 1: 'Yes'})
+# Display Feature Importance
+def plot_feature_importance(model, X):
+    importance = model.feature_importances_
+    feature_names = X.columns
+    feature_df = pd.DataFrame({'Feature': feature_names, 'Importance': importance})
+    feature_df = feature_df.sort_values(by='Importance', ascending=False)
 
-# Feature Selection: Drop target column and any unnecessary columns
-X = data.drop(columns=['price'])
-y = data['price']
+    st.write("Feature Importance:")
+    st.write(feature_df)
 
-# Apply log transformation to the target variable (house price)
-y_log = np.log1p(y)  # log1p is log(1 + y), useful when the target has zeros
+    # Plotting feature importance
+    plt.figure(figsize=(10, 6))
+    plt.barh(feature_df['Feature'], feature_df['Importance'])
+    plt.xlabel('Importance')
+    plt.title('Feature Importance')
+    st.pyplot(plt)
 
-# Train/Test split
-X_train, X_test, y_train, y_test = train_test_split(X, y_log, test_size=0.2, random_state=42)
+# Main App
+def main():
+    st.title("House Price Prediction")
+    
+    # Load data
+    data = load_data()
 
-# Train Random Forest model
-model = RandomForestRegressor(n_estimators=100, random_state=42, max_depth=15, min_samples_split=10)
-model.fit(X_train, y_train)
+    # Apply Log Transformation on target variable (price)
+    data = log_transform_target(data)
+    
+    # Prepare input features and target variable
+    X = data.drop(columns=['price'])
+    y = data['price']
 
-# Predictions and Model Evaluation
-y_pred = model.predict(X_test)
-mse = mean_squared_error(y_test, y_pred)
+    # Split the dataset into train and test
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Train model
+    model = train_model(X_train, y_train)
 
-# Streamlit Sidebar for Inputs
-st.sidebar.title("House Price Prediction Inputs")
+    # Feature importance
+    plot_feature_importance(model, X)
 
-area = st.sidebar.number_input("Area (in square feet)", min_value=1, step=1)
-bedrooms = st.sidebar.number_input("Bedrooms", min_value=1, step=1)
-bathrooms = st.sidebar.number_input("Bathrooms", min_value=1, step=1)
-stories = st.sidebar.number_input("Stories", min_value=1, step=1)
+    # Sidebar Input Fields for Prediction
+    st.sidebar.header("Input Features for Prediction")
 
-guestroom = st.sidebar.selectbox("Guestroom (Yes/No)", ["Yes", "No"])
-mainroad = st.sidebar.selectbox("Mainroad (Yes/No)", ["Yes", "No"])
-basement = st.sidebar.selectbox("Basement (Yes/No)", ["Yes", "No"])
-hotwaterheating = st.sidebar.selectbox("Hotwaterheating (Yes/No)", ["Yes", "No"])
-airconditioning = st.sidebar.selectbox("Airconditioning (Yes/No)", ["Yes", "No"])
-prefarea = st.sidebar.selectbox("Prefarea (Yes/No)", ["Yes", "No"])
-furnishingstatus = st.sidebar.selectbox("Furnishing Status (Yes/No)", ["Yes", "No"])
+    area = st.sidebar.number_input('Area (in sqft)', min_value=1, step=1)
+    bedrooms = st.sidebar.number_input('Bedrooms', min_value=1, step=1)
+    bathrooms = st.sidebar.number_input('Bathrooms', min_value=1, step=1)
+    stories = st.sidebar.number_input('Stories', min_value=1, step=1)
+    mainroad = st.sidebar.selectbox('Mainroad', ['No', 'Yes'])
+    guestroom = st.sidebar.selectbox('Guestroom', ['No', 'Yes'])
+    basement = st.sidebar.selectbox('Basement', ['No', 'Yes'])
+    hotwaterheating = st.sidebar.selectbox('Hotwaterheating', ['No', 'Yes'])
+    airconditioning = st.sidebar.selectbox('Airconditioning', ['No', 'Yes'])
+    parking = st.sidebar.number_input('Parking', min_value=0, step=1)
+    prefarea = st.sidebar.selectbox('Preferred Area', ['No', 'Yes'])
+    furnishingstatus = st.sidebar.selectbox('Furnishing Status', ['Unfurnished', 'Semi-Furnished', 'Furnished'])
 
-# Map user inputs to numeric values (0 for No, 1 for Yes)
-input_data = {
-    'area': area,
-    'bedrooms': bedrooms,
-    'bathrooms': bathrooms,
-    'stories': stories,
-    'guestroom': 1 if guestroom == "Yes" else 0,
-    'mainroad': 1 if mainroad == "Yes" else 0,
-    'basement': 1 if basement == "Yes" else 0,
-    'hotwaterheating': 1 if hotwaterheating == "Yes" else 0,
-    'airconditioning': 1 if airconditioning == "Yes" else 0,
-    'prefarea': 1 if prefarea == "Yes" else 0,
-    'furnishingstatus': 1 if furnishingstatus == "Yes" else 0,
-}
+    # Map categorical inputs to 0 or 1
+    mainroad = 1 if mainroad == 'Yes' else 0
+    guestroom = 1 if guestroom == 'Yes' else 0
+    basement = 1 if basement == 'Yes' else 0
+    hotwaterheating = 1 if hotwaterheating == 'Yes' else 0
+    airconditioning = 1 if airconditioning == 'Yes' else 0
+    prefarea = 1 if prefarea == 'Yes' else 0
 
-# Convert input data into a DataFrame for prediction
-input_df = pd.DataFrame([input_data])
+    input_data = pd.DataFrame({
+        'area': [area],
+        'bedrooms': [bedrooms],
+        'bathrooms': [bathrooms],
+        'stories': [stories],
+        'mainroad': [mainroad],
+        'guestroom': [guestroom],
+        'basement': [basement],
+        'hotwaterheating': [hotwaterheating],
+        'airconditioning': [airconditioning],
+        'parking': [parking],
+        'prefarea': [prefarea],
+        'furnishingstatus': [furnishingstatus]
+    })
 
-# Align the columns of input_df with the training data (X)
-input_df = input_df[X.columns]
+    # Make prediction when user presses button
+    if st.sidebar.button("Predict House Price"):
+        predicted_price_log = model.predict(input_data)[0]
+        
+        # Inverse log transformation
+        predicted_price = np.exp(predicted_price_log)
 
-# Create a "Predict" button
-if st.sidebar.button("Predict"):
-    # Predict the house price using the trained model
-    predicted_price_log = model.predict(input_df)[0]
-    predicted_price = np.expm1(predicted_price_log)  # Convert log-transformed value back to original scale
+        # Display predicted price
+        st.subheader(f"Predicted House Price: ₹{predicted_price:,.2f}")
 
-    # Display the results in the main window
-    st.write(f"### Predicted House Price: ₹{predicted_price:,.2f}")
-    st.write(f"### Mean Squared Error (MSE): {mse:.2f}")
+        # Model evaluation on test set (MSE)
+        y_pred = model.predict(X_test)
+        mse = mean_squared_error(y_test, y_pred)
+        st.subheader(f"Mean Squared Error (MSE) on Test Set: {mse:,.2f}")
+
+# Run the app
+if __name__ == "__main__":
+    main()
