@@ -8,9 +8,9 @@ from sklearn.metrics import mean_squared_error
 st.title("House Price Prediction App")
 
 # Load the constant CSV file
-data = pd.read_csv('Housing.csv')  # Assuming the file is in the same directory as your script
+data = pd.read_csv('Housing.csv')  # Ensure the file is in the same directory
 
-# Preprocess categorical data (convert yes/no to 1/0, etc.)
+# Preprocess categorical data (convert yes/no to 1/0)
 data['mainroad'] = data['mainroad'].map({'yes': 1, 'no': 0})
 data['guestroom'] = data['guestroom'].map({'yes': 1, 'no': 0})
 data['basement'] = data['basement'].map({'yes': 1, 'no': 0})
@@ -40,14 +40,28 @@ area = st.sidebar.number_input("Area (sqft)", value=5000)
 bedrooms = st.sidebar.slider("Bedrooms", 1, 10, 3)
 bathrooms = st.sidebar.slider("Bathrooms", 1, 5, 2)
 stories = st.sidebar.slider("Stories", 1, 4, 2)
-mainroad = st.sidebar.selectbox("Main Road", [0, 1])
-guestroom = st.sidebar.selectbox("Guestroom", [0, 1])
-basement = st.sidebar.selectbox("Basement", [0, 1])
-hotwaterheating = st.sidebar.selectbox("Hot Water Heating", [0, 1])
-airconditioning = st.sidebar.selectbox("Air Conditioning", [0, 1])
+
+# Display Yes/No and map to 1/0 for model input
+mainroad = st.sidebar.selectbox("Main Road", ["Yes", "No"])
+guestroom = st.sidebar.selectbox("Guestroom", ["Yes", "No"])
+basement = st.sidebar.selectbox("Basement", ["Yes", "No"])
+hotwaterheating = st.sidebar.selectbox("Hot Water Heating", ["Yes", "No"])
+airconditioning = st.sidebar.selectbox("Air Conditioning", ["Yes", "No"])
+prefarea = st.sidebar.selectbox("Preferred Area", ["Yes", "No"])
 parking = st.sidebar.slider("Parking", 0, 5, 2)
-prefarea = st.sidebar.selectbox("Preferred Area", [0, 1])
-furnishingstatus = st.sidebar.selectbox("Furnishing Status", [0, 1, 2])
+furnishingstatus = st.sidebar.selectbox("Furnishing Status", ["Unfurnished", "Semi-Furnished", "Furnished"])
+
+# Map Yes/No to 1/0
+mainroad = 1 if mainroad == "Yes" else 0
+guestroom = 1 if guestroom == "Yes" else 0
+basement = 1 if basement == "Yes" else 0
+hotwaterheating = 1 if hotwaterheating == "Yes" else 0
+airconditioning = 1 if airconditioning == "Yes" else 0
+prefarea = 1 if prefarea == "Yes" else 0
+
+# Map furnishing status
+furnishing_map = {"Unfurnished": 0, "Semi-Furnished": 1, "Furnished": 2}
+furnishingstatus = furnishing_map[furnishingstatus]
 
 # Predict button
 if st.sidebar.button("Predict Price"):
