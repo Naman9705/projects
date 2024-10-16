@@ -1,56 +1,56 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
+import seaborn as sns
 
-# Load the data from CSV file (assuming it's in the same repo)
-@st.cache
+# Function to load and preprocess the data
 def load_data():
-    # Make sure to put the correct path to the CSV file in the repo
-    data = pd.read_csv("Housing.csv")
+    # Load dataset from the CSV file
+    data = pd.read_csv("house_data.csv")
+    
+    # Handle missing values by dropping rows with NaN values
+    data = data.dropna()
+
+    # Apply Log Transformation on the target variable (price)
+    data['price'] = np.log1p(data['price'])
+
     return data
 
-# Apply Log Transformation to the target variable (Price)
-def log_transform_target(df, target_column='price'):
-    df[target_column] = np.log(df[target_column])
-    return df
-
-# Train the Random Forest Regressor Model
+# Function to train the model
 def train_model(X_train, y_train):
     model = RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
     return model
 
-# Display Feature Importance
+# Function to plot feature importance
 def plot_feature_importance(model, X):
-    importance = model.feature_importances_
+    feature_importance = model.feature_importances_
     feature_names = X.columns
-    feature_df = pd.DataFrame({'Feature': feature_names, 'Importance': importance})
-    feature_df = feature_df.sort_values(by='Importance', ascending=False)
 
-    st.write("Feature Importance:")
-    st.write(feature_df)
+    # Create a DataFrame of feature importance
+    feature_df = pd.DataFrame({
+        'Feature': feature_names,
+        'Importance': feature_importance
+    }).sort_values(by='Importance', ascending=False)
 
-    # Plotting feature importance
+    # Plot feature importance
     plt.figure(figsize=(10, 6))
-    plt.barh(feature_df['Feature'], feature_df['Importance'])
-    plt.xlabel('Importance')
+    sns.barplot(x='Importance', y='Feature', data=feature_df)
     plt.title('Feature Importance')
-    st.pyplot(plt)
+    plt.show()
 
-# Main App
+# Main function to build the Streamlit interface
 def main():
     st.title("House Price Prediction")
     
-    # Load data
+    # Load and preprocess data
     data = load_data()
 
-    # Apply Log Transformation on target variable (price)
-    data = log_transform_target(data)
-    
     # Prepare input features and target variable
     X = data.drop(columns=['price'])
     y = data['price']
@@ -66,7 +66,6 @@ def main():
 
     # Sidebar Input Fields for Prediction
     st.sidebar.header("Input Features for Prediction")
-
     area = st.sidebar.number_input('Area (in sqft)', min_value=1, step=1)
     bedrooms = st.sidebar.number_input('Bedrooms', min_value=1, step=1)
     bathrooms = st.sidebar.number_input('Bathrooms', min_value=1, step=1)
@@ -88,6 +87,7 @@ def main():
     airconditioning = 1 if airconditioning == 'Yes' else 0
     prefarea = 1 if prefarea == 'Yes' else 0
 
+    # Prepare input data as a DataFrame
     input_data = pd.DataFrame({
         'area': [area],
         'bedrooms': [bedrooms],
