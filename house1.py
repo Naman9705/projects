@@ -74,6 +74,9 @@ input_data = {
 # Convert input data into a DataFrame for prediction
 input_df = pd.DataFrame([input_data])
 
+# Align the columns of input_df with the training data (X)
+input_df = input_df[X.columns]
+
 # Predict the house price using the trained model
 predicted_price_log = model.predict(input_df)[0]
 predicted_price = np.expm1(predicted_price_log)  # Convert log-transformed value back to original scale
