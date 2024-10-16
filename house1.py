@@ -3,6 +3,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import StandardScaler
+
 
 # Streamlit app title
 st.title("House Price Prediction App")
@@ -25,6 +27,15 @@ y = data['price']
 
 # Split data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+# Separate numeric columns for scaling
+numeric_features = ['area', 'bedrooms', 'bathrooms', 'stories', 'parking']
+
+# Apply standard scaling
+scaler = StandardScaler()
+data[numeric_features] = scaler.fit_transform(data[numeric_features])
+
 
 # Train a linear regression model
 model = LinearRegression()
