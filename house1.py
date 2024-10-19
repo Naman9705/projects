@@ -8,7 +8,7 @@ from sklearn.metrics import mean_squared_error
 st.title("House Price Prediction App")
 
 # Load the constant CSV file
-data = pd.read_csv('Housing_cleaned.csv')  # Ensure the file is in the same directory
+data = pd.read_csv('Housing.csv')  # Ensure the file is in the same directory
 
 # Preprocess categorical data (convert yes/no to 1/0)
 data['mainroad'] = data['mainroad'].map({'yes': 1, 'no': 0})
