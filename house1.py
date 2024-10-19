@@ -1,109 +1,81 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
-from sklearn.preprocessing import LabelEncoder
-import matplotlib.pyplot as plt
-import seaborn as sns
-import warnings
-warnings.filterwarnings("ignore")
 
-# Function to load and preprocess the data
-def load_data():
-    # Load dataset from the CSV file
-    data = pd.read_csv("house_data.csv")
-    
-    # Handle missing values by dropping rows with NaN values
-    data = data.dropna()
-    
-    # Label Encoding for binary columns (e.g. 'yes'/'no')
-    label_columns = ['airconditioning', 'basement', 'guestroom', 'mainroad', 'prefarea', 'hotwaterheating']  # Add other columns if needed
-    label_encoder = LabelEncoder()
-    for col in label_columns:
-        data[col] = label_encoder.fit_transform(data[col])
+# Streamlit app title
+st.title("House Price Prediction App")
 
-    # One-Hot Encoding for multi-class columns (if any)
-    data = pd.get_dummies(data, drop_first=True)
-    
-    return data
+# Load the constant CSV file
+data = pd.read_csv('Housing.csv')  # Ensure the file is in the same directory
 
-# Function to train the model
-def train_model(X_train, y_train):
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
-    model.fit(X_train, y_train)
-    return model
+# Preprocess categorical data (convert yes/no to 1/0)
+data['mainroad'] = data['mainroad'].map({'yes': 1, 'no': 0})
+data['guestroom'] = data['guestroom'].map({'yes': 1, 'no': 0})
+data['basement'] = data['basement'].map({'yes': 1, 'no': 0})
+data['hotwaterheating'] = data['hotwaterheating'].map({'yes': 1, 'no': 0})
+data['airconditioning'] = data['airconditioning'].map({'yes': 1, 'no': 0})
+data['prefarea'] = data['prefarea'].map({'yes': 1, 'no': 0})
+data['furnishingstatus'] = data['furnishingstatus'].map({'unfurnished': 0, 'semi-furnished': 1, 'furnished': 2})
 
-# Function to evaluate the model
-def evaluate_model(model, X_test, y_test):
-    y_pred = model.predict(X_test)
-    mse = mean_squared_error(y_test, y_pred)
-    return mse, y_pred
+# Features and target
+X = data.drop('price', axis=1)
+y = data['price']
 
-# Streamlit app
-def main():
-    # Title and description
-    st.title("House Price Prediction")
-    st.write("This app uses a Random Forest model to predict house prices based on various features.")
-    
-    # Load and preprocess data
-    data = load_data()
-    
-    # Prepare input features and target variable
-    X = data.drop(columns=['price'])
-    y = data['price']
-    
-    # Split the data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    # Train the model
-    model = train_model(X_train, y_train)
-    
-    # Evaluate the model
-    mse, y_pred = evaluate_model(model, X_test, y_test)
-    
-    # Display the results
-    st.write(f"Mean Squared Error: {mse}")
-    
-    # Create input fields for prediction
-    st.subheader("Enter the values for prediction:")
-    
-    input_data = {}
-    for col in X.columns:
-        input_data[col] = st.number_input(f"Enter {col}", min_value=0, step=1)
-    
-    # Predict on user input
-    if st.button('Predict'):
-        input_df = pd.DataFrame([input_data])
-        
-        # Apply the same preprocessing steps to the input data
-        for col in label_columns:
-            if col in input_df.columns:
-                input_df[col] = label_encoder.transform(input_df[col])
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        input_df = pd.get_dummies(input_df, drop_first=True)
-        
-        # Ensure input data has the same columns as training data
-        input_df = input_df.reindex(columns=X.columns, fill_value=0)
-        
-        # Make prediction
-        predicted_price = model.predict(input_df)[0]
-        st.write(f"Predicted Price: {predicted_price}")
-    
-    # Feature importance plot
-    st.subheader("Feature Importance")
-    feature_importances = model.feature_importances_
-    feature_names = X.columns
-    importance_df = pd.DataFrame({
-        'Feature': feature_names,
-        'Importance': feature_importances
-    }).sort_values(by='Importance', ascending=False)
-    
-    fig, ax = plt.subplots()
-    sns.barplot(x='Importance', y='Feature', data=importance_df, ax=ax)
-    st.pyplot(fig)
+# Train a linear regression model
+model = LinearRegression()
+model.fit(X_train, y_train)
 
-# Run the app
-if __name__ == "__main__":
-    main()
+# Evaluate the model
+y_pred = model.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+
+# Sidebar for user inputs
+st.sidebar.header("Input Features")
+area = st.sidebar.number_input("Area (sqft)", value=5000)
+bedrooms = st.sidebar.slider("Bedrooms", 1, 10, 3)
+bathrooms = st.sidebar.slider("Bathrooms", 1, 5, 2)
+stories = st.sidebar.slider("Stories", 1, 4, 2)
+
+# Display Yes/No and map to 1/0 for model input
+mainroad = st.sidebar.selectbox("Main Road", ["Yes", "No"])
+guestroom = st.sidebar.selectbox("Guestroom", ["Yes", "No"])
+basement = st.sidebar.selectbox("Basement", ["Yes", "No"])
+hotwaterheating = st.sidebar.selectbox("Hot Water Heating", ["Yes", "No"])
+airconditioning = st.sidebar.selectbox("Air Conditioning", ["Yes", "No"])
+prefarea = st.sidebar.selectbox("Preferred Area", ["Yes", "No"])
+parking = st.sidebar.slider("Parking", 0, 5, 2)
+furnishingstatus = st.sidebar.selectbox("Furnishing Status", ["Unfurnished", "Semi-Furnished", "Furnished"])
+
+# Map Yes/No to 1/0
+mainroad = 1 if mainroad == "Yes" else 0
+guestroom = 1 if guestroom == "Yes" else 0
+basement = 1 if basement == "Yes" else 0
+hotwaterheating = 1 if hotwaterheating == "Yes" else 0
+airconditioning = 1 if airconditioning == "Yes" else 0
+prefarea = 1 if prefarea == "Yes" else 0
+
+# Map furnishing status
+furnishing_map = {"Unfurnished": 0, "Semi-Furnished": 1, "Furnished": 2}
+furnishingstatus = furnishing_map[furnishingstatus]
+
+# Predict button
+if st.sidebar.button("Predict Price"):
+    # Create input data
+    input_data = pd.DataFrame([[area, bedrooms, bathrooms, stories, mainroad, guestroom, basement,
+                                hotwaterheating, airconditioning, parking, prefarea, furnishingstatus]],
+                              columns=X.columns)
+    
+    # Make prediction
+    predicted_price = model.predict(input_data)[0]
+    
+    # Display the result
+    st.write(f"Predicted House Price: ₹{predicted_price:,.2f}")
+
+# Show model evaluation metrics
+st.subheader("Model Performance")
+st.write(f"Mean Squared Error on Test Set: {mse:.2f}")
