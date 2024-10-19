@@ -78,4 +78,3 @@ if st.sidebar.button("Predict Price"):
 
 # Show model evaluation metrics
 st.subheader("Model Performance")
-st.write(f"Mean Squared Error on Test Set: {mse:.2f}")
